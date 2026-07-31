@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>5 Özel Red Team Aracı — Görsel Önizleme</title>
+<style>
+:root{
+  --bg:#0a0e14; --bg2:#111722; --panel:#161d2b; --border:#26314a;
+  --red:#ff3b4e; --orange:#ff8a3d; --green:#20c997; --blue:#3b9dff;
+  --purple:#9d6bff; --text:#dbe4f3; --dim:#7a8aa8;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Consolas','Courier New',monospace;
+  background:radial-gradient(circle at 20% 0%, #131a28 0%, #0a0e14 60%);
+  color:var(--text); min-height:100vh; padding:0 0 60px;
+}
+header{
+  padding:36px 24px 20px; text-align:center;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,#0d1420,#0a0e14);
+}
+header h1{
+  font-size:26px; letter-spacing:2px; color:#fff;
+  background:linear-gradient(90deg,var(--red),var(--orange));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  animation:glow 3s ease-in-out infinite alternate;
+}
+@keyframes glow{ from{filter:drop-shadow(0 0 2px rgba(255,59,78,.3));} to{filter:drop-shadow(0 0 12px rgba(255,138,61,.55));} }
+header p{color:var(--dim); font-size:12.5px; margin-top:8px; letter-spacing:1px;}
+.warn{
+  max-width:760px; margin:16px auto 0; background:#221407; border:1px solid #7a3d10;
+  color:#ffcf9a; font-size:11.5px; padding:10px 16px; border-radius:6px; text-align:left;
+}
+nav{
+  display:flex; justify-content:center; gap:8px; flex-wrap:wrap;
+  margin:22px auto 0; max-width:1000px; padding:0 16px;
+}
+nav button{
+  background:var(--panel); border:1px solid var(--border); color:var(--dim);
+  padding:9px 16px; border-radius:20px; font-family:inherit; font-size:11.5px;
+  cursor:pointer; letter-spacing:.5px; transition:.2s;
+}
+nav button:hover{color:#fff; border-color:var(--orange);}
+nav button.active{ color:#0a0e14; background:linear-gradient(90deg,var(--red),var(--orange)); border-color:transparent; font-weight:700;}
+
+main{max-width:1000px; margin:26px auto 0; padding:0 16px;}
+.panel{display:none; animation:fadein .4s ease;}
+.panel.active{display:block;}
+@keyframes fadein{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+.tool-head{
+  display:flex; justify-content:space-between; align-items:center;
+  background:var(--panel); border:1px solid var(--border); border-radius:10px;
+  padding:16px 20px; margin-bottom:16px;
+}
+.tool-head h2{font-size:19px; color:#fff;}
+.tool-head .sub{font-size:11px; color:var(--dim); margin-top:4px;}
+.tag{
+  font-size:10px; padding:5px 12px; border-radius:14px; font-weight:700; letter-spacing:.5px;
+}
+.tag.recon{background:#123a2e;color:var(--green);}
+.tag.c2{background:#3a1212;color:var(--red);}
+.tag.phish{background:#123048;color:var(--blue);}
+.tag.forge{background:#3a2408;color:var(--orange);}
+.tag.bas{background:#241238;color:var(--purple);}
+
+.mockbox{
+  background:#05070c; border:1px solid var(--border); border-radius:10px;
+  padding:18px; margin-bottom:16px; min-height:280px; position:relative; overflow:hidden;
+}
+.desc-box{
+  background:var(--panel); border:1px solid var(--border); border-radius:10px;
+  padding:16px 20px; margin-bottom:16px; font-size:12px; line-height:1.7; color:#c3cee0;
+}
+.desc-box b{color:#fff;}
+.cmdline{font-size:12px; color:var(--dim); margin:16px 0 6px;}
+.code{
+  background:#05070c; border:1px solid var(--border); border-radius:8px;
+  padding:14px 16px; font-size:11px; color:#8be9a3; overflow-x:auto; margin-bottom:14px;
+  white-space:pre;
+}
+.code .c1{color:var(--orange);} .code .c2{color:var(--blue);} .code .c3{color:var(--dim);}
+.php-box{
+  background:#0c0716; border:1px solid #3a2a5c; border-radius:8px;
+  padding:14px 16px; font-size:10.8px; color:#cdb8ff; overflow-x:auto; white-space:pre; margin-bottom:8px;
+}
+.lang-pill{display:inline-block; background:#111c14; color:var(--green); border:1px solid #1f4a34; border-radius:12px; padding:3px 10px; font-size:10px; margin:2px 4px 2px 0;}
+
+/* ===== SHADOWMAP graph mock ===== */
+.graph-node{
+  position:absolute; width:52px; height:52px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; font-size:9px; text-align:center;
+  border:2px solid var(--green); background:#0d1f19; color:#c9f5e0;
+  animation:pulse 2.4s ease-in-out infinite;
+}
+.graph-node.risk{border-color:var(--red); background:#2a0d0f; color:#ffc9cf; animation-duration:1.4s;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(32,201,151,.35);} 50%{box-shadow:0 0 0 10px rgba(32,201,151,0);}}
+svg.edges line{stroke:#264a3a; stroke-width:1.5; stroke-dasharray:4 3; animation:dash 3s linear infinite;}
+svg.edges line.hot{stroke:var(--red); stroke-width:2;}
+@keyframes dash{to{stroke-dashoffset:-40;}}
+
+/* ===== CERBERUS terminal mock ===== */
+.term{background:#05070c;border-radius:8px;padding:14px;font-size:11.5px;color:#9ef7c0;min-height:230px;}
+.term .prompt{color:var(--red);}
+.term .line{opacity:0; animation:typein .4s forwards;}
+@keyframes typein{to{opacity:1;}}
+.cursor{display:inline-block;width:7px;height:13px;background:#9ef7c0;animation:blink 1s step-end infinite; vertical-align:middle;}
+@keyframes blink{50%{opacity:0;}}
+
+/* ===== PHANTOMPHISH funnel mock ===== */
+.funnel{display:flex; flex-direction:column; gap:8px; padding:10px 0;}
+.fstep{display:flex; align-items:center; gap:12px;}
+.fstep .label{width:110px;font-size:11px;color:var(--dim);}
+.fstep .bar{height:22px;border-radius:4px;background:linear-gradient(90deg,var(--blue),#1c5fa8);
+  animation:grow 1.2s ease-out forwards; width:0;}
+.fstep .val{font-size:11px;color:#fff;width:40px;}
+
+/* ===== EXPLOITFORGE pipeline mock ===== */
+.pipeline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:20px 0;}
+.pstage{background:#1a0f05;border:1px solid #4a2a08;border-radius:8px;padding:12px 16px;font-size:11px;color:var(--orange); position:relative;}
+.pstage::after{content:'→'; position:absolute; right:-18px; top:50%; transform:translateY(-50%); color:var(--dim);}
+.pstage:last-child::after{content:'';}
+.tag-canary{display:inline-block;margin-top:20px;background:#160e05;border:1px dashed var(--orange);color:#ffc98a;font-size:10px;padding:6px 12px;border-radius:6px;}
+
+/* ===== BREACHSIM matrix mock ===== */
+.matrix{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;padding:10px 0;}
+.cell{height:34px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#08150f;font-weight:700;
+  animation:reveal .6s ease forwards; opacity:0;}
+@keyframes reveal{to{opacity:1;}}
+.cell.g{background:var(--green);} .cell.y{background:#e0c34d;color:#241c00;} .cell.r{background:var(--red);color:#fff;}
+.trend{display:flex;align-items:flex-end;gap:6px;height:80px;margin-top:16px;}
+.trend .bar2{width:16px;background:linear-gradient(180deg,var(--purple),#4b2a86);border-radius:3px 3px 0 0;animation:rise 1s ease-out forwards;height:0;}
+
+footer{max-width:1000px;margin:30px auto 0;padding:16px;text-align:center;color:var(--dim);font-size:10.5px;border-top:1px solid var(--border);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>◈ RED TEAM ARAÇ SETİ — 5 ÖZEL TASARIM ◈</h1>
+  <p>ShadowMap · CerberusC2 · PhantomPhish · ExploitForge · BreachSim</p>
+  <div class="warn">⚠ Bu sayfa yalnızca GÖRSEL ÖNİZLEME / MOCKUP amaçlıdır — gerçek bir araç
+  çalıştırmaz. Tüm komut çıktıları ve grafikler örnek/temsili verilerdir. Gerçek
+  geliştirme yalnızca yazılı izinli pentest/red team ortamları için önerilir.</div>
+</header>
+
+<nav>
+  <button class="tab active" data-t="t1">1 · ShadowMap</button>
+  <button class="tab" data-t="t2">2 · CerberusC2</button>
+  <button class="tab" data-t="t3">3 · PhantomPhish</button>
+  <button class="tab" data-t="t4">4 · ExploitForge</button>
+  <button class="tab" data-t="t5">5 · BreachSim</button>
+</nav>
+
+<main>
+
+<!-- 1 SHADOWMAP -->
+<section class="panel active" id="t1">
+  <div class="tool-head">
+    <div><h2>ShadowMap</h2><div class="sub">Saldırı Yüzeyi ve Saldırı Yolu Haritalama</div></div>
+    <span class="tag recon">RECON / GRAPH</span>
+  </div>
+  <div class="mockbox">
+    <svg class="edges" width="100%" height="240" style="position:absolute;top:0;left:0;">
+      <line x1="90" y1="60" x2="260" y2="120" />
+      <line x1="260" y1="120" x2="430" y2="70" class="hot"/>
+      <line x1="260" y1="120" x2="420" y2="190" />
+      <line x1="430" y1="70" x2="620" y2="110" class="hot"/>
+      <line x1="90" y1="60" x2="130" y2="190"/>
+    </svg>
+    <div class="graph-node" style="left:65px;top:35px;">WKS01<br>user</div>
+    <div class="graph-node" style="left:105px;top:165px;">WKS02<br>user</div>
+    <div class="graph-node risk" style="left:235px;top:95px;">SVC-SQL<br>admin</div>
+    <div class="graph-node risk" style="left:405px;top:45px;">DC01<br>DA</div>
+    <div class="graph-node" style="left:395px;top:165px;">FILESRV</div>
+    <div class="graph-node risk" style="left:595px;top:85px;">Domain<br>Admins</div>
+  </div>
+  <div class="desc-box">
+    Kırmızı düğümler <b>"3 adımda Domain Admin'e ulaşılabilir"</b> saldırı
+    yolundaki kritik node'ları gösterir. Yeşil pulsasyon normal risk
+    seviyesini, kırmızı hızlı pulsasyon kritik yolu temsil eder.
+  </div>
+  <div class="cmdline">$ örnek CLI kullanımı</div>
+  <div class="code">$ shadowmap path find <span class="c1">--from</span> WKS01 <span class="c1">--to</span> <span class="c2">"Domain Admins"</span>
+<span class="c3"># Sonuç: WKS01 → SVC-SQL (admin) → DC01 → Domain Admins  (3 adım, YÜKSEK risk)</span></div>
+  <div class="cmdline">Örnek Backend Mantığı (PHP — API endpoint tasarımı)</div>
+  <div class="php-box">&lt;?php
+// api/path_find.php — angajman kapsamı doğrulanmadan sorgu çalışmaz
+require_once 'scope_guard.php';
+if (!ScopeGuard::isAuthorized($_GET['engagement_id'])) {
+    http_response_code(403); exit(json_encode(['error' =&gt; 'Kapsam onaylanmamış']));
+}
+$from = $_GET['from']; $to = $_GET['to'];
+$path = Neo4jClient::shortestPath($from, $to, $weight = 'detection_risk');
+echo json_encode(['path' =&gt; $path, 'steps' =&gt; count($path) - 1]);</div>
+  <p><span class="lang-pill">Go (collector)</span><span class="lang-pill">Python (analiz)</span><span class="lang-pill">TypeScript/React (UI)</span></p>
+</section>
+
+<!-- 2 CERBERUSC2 -->
+<section class="panel" id="t2">
+  <div class="tool-head">
+    <div><h2>CerberusC2</h2><div class="sub">Modüler, Şifreli Komuta-Kontrol Çatısı</div></div>
+    <span class="tag c2">C2 FRAMEWORK</span>
+  </div>
+  <div class="mockbox">
+    <div class="term">
+<div class="line" style="animation-delay:.1s"><span class="prompt">cerberus&gt;</span> engagement load acme_2026_q3.scope</div>
+<div class="line" style="animation-delay:.5s">[✓] Kapsam yüklendi: 12 host, 1 domain, imza doğrulandı</div>
+<div class="line" style="animation-delay:.9s"><span class="prompt">cerberus&gt;</span> sessions</div>
+<div class="line" style="animation-delay:1.3s">  [1] WIN-TEST01   192.168.50.12   check-in: 14s önce   priv: user</div>
+<div class="line" style="animation-delay:1.6s">  [2] WIN-TEST04   192.168.50.19   check-in: 3s önce    priv: SYSTEM</div>
+<div class="line" style="animation-delay:2.0s"><span class="prompt">cerberus (WIN-TEST04)&gt;</span> whoami</div>
+<div class="line" style="animation-delay:2.4s">  nt authority\system</div>
+<div class="line" style="animation-delay:2.8s"><span class="prompt">cerberus (WIN-TEST04)&gt;</span> <span class="cursor"></span></div>
+    </div>
+  </div>
+  <div class="desc-box">
+    Terminal öncelikli operatör konsolu. Her implant yalnızca angajman
+    kapsamındaki hostlara check-in yapabilir; kapsam dışına çıkarsa
+    <b>otomatik kendini sonlandırır</b> (etik/yasal güvence).
+  </div>
+  <div class="cmdline">$ örnek CLI kullanımı</div>
+  <div class="code">$ cerberus listener start https <span class="c1">--domain</span> cdn-assets.example-test.com <span class="c1">--profile</span> jquery_cdn
+$ cerberus implant generate <span class="c1">--os</span> windows <span class="c1">--listener</span> https_1 <span class="c1">--out</span> payload.exe
+$ cerberus engagement export-evidence <span class="c1">--encrypt</span> <span class="c1">--out</span> evidence_2026Q3.pkg</div>
+  <div class="cmdline">Örnek Backend Mantığı (PHP — teamserver check-in endpoint'i)</div>
+  <div class="php-box">&lt;?php
+// api/checkin.php — implant'lar buraya periyodik "beacon" isteği atar
+$implantId = AuthToken::verify($_POST['token']);
+if (!ScopeGuard::hostAllowed($implantId, $_SERVER['REMOTE_ADDR'])) {
+    Implant::selfDestructSignal($implantId); // kapsam dışı -&gt; kendini sonlandır
+    exit(json_encode(['cmd' =&gt; 'terminate']));
+}
+$task = TaskQueue::nextFor($implantId);
+AuditLog::record($implantId, 'checkin', $_SERVER['REMOTE_ADDR']);
+echo json_encode(['cmd' =&gt; $task ?? 'sleep', 'interval' =&gt; 30]);</div>
+  <p><span class="lang-pill">Go (teamserver + implant)</span><span class="lang-pill">TypeScript/React (Session Map UI)</span></p>
+</section>
+
+<!-- 3 PHANTOMPHISH -->
+<section class="panel" id="t3">
+  <div class="tool-head">
+    <div><h2>PhantomPhish</h2><div class="sub">Kontrollü Sosyal Mühendislik Simülasyonu</div></div>
+    <span class="tag phish">AWARENESS / BAS</span>
+  </div>
+  <div class="mockbox">
+    <div class="funnel">
+      <div class="fstep"><div class="label">Gönderildi</div><div class="bar" style="width:100%;animation-delay:.1s;"></div><div class="val">42</div></div>
+      <div class="fstep"><div class="label">Açıldı</div><div class="bar" style="width:70%;animation-delay:.3s;"></div><div class="val">30</div></div>
+      <div class="fstep"><div class="label">Tıklandı</div><div class="bar" style="width:38%;animation-delay:.5s;background:linear-gradient(90deg,var(--orange),#b85a10);"></div><div class="val">16</div></div>
+      <div class="fstep"><div class="label">Form doldurdu</div><div class="bar" style="width:12%;animation-delay:.7s;background:linear-gradient(90deg,var(--red),#8a1522);"></div><div class="val">5</div></div>
+      <div class="fstep"><div class="label">Bildirdi ✓</div><div class="bar" style="width:20%;animation-delay:.9s;background:linear-gradient(90deg,var(--green),#0e7a56);"></div><div class="val">9</div></div>
+    </div>
+  </div>
+  <style>.fstep .bar{animation-fill-mode:forwards;} @keyframes grow{from{width:0;} }</style>
+  <div class="desc-box">
+    Huni grafiği: gönderilen e-postadan form doldurmaya kadar düşüş
+    oranı. Tıklayan kullanıcı anında <b>"bu bir tatbikattı"</b> eğitim
+    ekranına yönlendirilir — suçlayıcı değil, öğretici dil kullanılır.
+  </div>
+  <div class="cmdline">$ örnek CLI kullanımı</div>
+  <div class="code">$ phantomphish campaign create <span class="c1">--name</span> <span class="c2">"Q3-Finance-Awareness"</span> <span class="c1">--approval</span> hr_signoff.pdf
+$ phantomphish targets import <span class="c1">--file</span> finance_dept.csv <span class="c1">--consent-check</span>
+$ phantomphish campaign status <span class="c1">--name</span> <span class="c2">"Q3-Finance-Awareness"</span></div>
+  <div class="cmdline">Örnek Backend Mantığı (PHP — tıklama izleme endpoint'i)</div>
+  <div class="php-box">&lt;?php
+// api/track_click.php — izlenebilir link tıklanınca çağrılır
+$token = $_GET['t'];
+$recipient = CampaignDB::resolveToken($token);
+if (!ConsentGuard::approved($recipient['campaign_id'])) {
+    exit; // HR/hukuk onayı yoksa hiçbir veri işlenmez
+}
+CampaignDB::logEvent($recipient['id'], 'clicked', date('c'));
+header('Location: /education/tatbikat-bilgilendirme.php?ref=' . $token);</div>
+  <p><span class="lang-pill">Python/Flask (backend)</span><span class="lang-pill">HTML/CSS/JS (landing page)</span></p>
+</section>
+
+<!-- 4 EXPLOITFORGE -->
+<section class="panel" id="t4">
+  <div class="tool-head">
+    <div><h2>ExploitForge</h2><div class="sub">Payload / Exploit Geliştirme Tezgahı</div></div>
+    <span class="tag forge">WORKBENCH</span>
+  </div>
+  <div class="mockbox">
+    <div class="pipeline">
+      <div class="pstage">📄 Template<br>beacon-test.tpl</div>
+      <div class="pstage">🔐 Encode<br>XOR (auto-key)</div>
+      <div class="pstage">📦 Pack<br>exe / windows-x64</div>
+      <div class="pstage">🏷️ Canary Tag<br>ENG-2026-041</div>
+      <div class="pstage">🧪 Sandbox<br>win11-test VM</div>
+    </div>
+    <div class="tag-canary">🔎 Canary lookup: ENG-2026-041 → Oluşturulma 2026-07-25 10:14 · Operatör r.demir · Angajman ACME-Q3</div>
+  </div>
+  <div class="desc-box">
+    AES_Tool'un katmanlı şifreleme mantığına benzer bir <b>"pipeline"</b>
+    yaklaşımı: şablon → encode → pack → etiketleme → izole sandbox testi.
+    Her üretilen dosya angajman ID'si ile iz sürülebilir.
+  </div>
+  <div class="cmdline">$ örnek CLI kullanımı</div>
+  <div class="code">$ exploitforge build <span class="c1">--template</span> beacon-test <span class="c1">--os</span> windows <span class="c1">--tag</span> ENG-2026-041
+$ exploitforge sandbox run <span class="c1">--file</span> payload.exe <span class="c1">--vm</span> win11-test <span class="c1">--capture-network</span>
+$ exploitforge sandbox report <span class="c1">--last</span>
+<span class="c3">  AV/EDR tespiti: Windows Defender -&gt; YAKALANDI (14. saniye)</span></div>
+  <div class="cmdline">Örnek Backend Mantığı (PHP — canary etiket sorgulama servisi)</div>
+  <div class="php-box">&lt;?php
+// api/canary_lookup.php — üretilen her payload'ın izini sürme servisi
+$tag = $_GET['tag'];
+$record = CanaryDB::find($tag);
+if (!$record) { http_response_code(404); exit; }
+echo json_encode([
+    'tag' =&gt; $tag, 'created_at' =&gt; $record['created_at'],
+    'operator' =&gt; $record['operator'], 'engagement' =&gt; $record['engagement_id'],
+    'sandbox_result' =&gt; SandboxDB::lastResultFor($tag)
+]);</div>
+  <p><span class="lang-pill">Python (orkestrasyon)</span><span class="lang-pill">Rust/C (düşük seviye modüller)</span></p>
+</section>
+
+<!-- 5 BREACHSIM -->
+<section class="panel" id="t5">
+  <div class="tool-head">
+    <div><h2>BreachSim</h2><div class="sub">Sürekli İhlal ve Saldırı Simülasyonu (BAS)</div></div>
+    <span class="tag bas">CONTINUOUS VALIDATION</span>
+  </div>
+  <div class="mockbox">
+    <div class="matrix" id="matrixGrid"></div>
+    <div class="trend" id="trendGrid"></div>
+  </div>
+  <script>
+    const cells = ['g','g','y','g','r','g','y','g','g','r','g','g','g','y','g','g','r','g','g','g','g','y','g','g','g','g','g','g','r','g','g','g'];
+    const grid = document.getElementById('matrixGrid');
+    cells.forEach((c,i)=>{ const d=document.createElement('div'); d.className='cell '+c; d.style.animationDelay=(i*0.03)+'s'; d.textContent=(c==='g'?'✓':c==='y'?'~':'✗'); grid.appendChild(d); });
+    const vals=[30,42,38,55,60,58,72,78];
+    const tg = document.getElementById('trendGrid');
+    vals.forEach((v,i)=>{ const b=document.createElement('div'); b.className='bar2'; b.style.animationDelay=(i*0.12)+'s'; b.style.setProperty('--h', v+'px'); tg.appendChild(b); });
+    document.querySelectorAll('.bar2').forEach(b=>{ b.style.animation='rise .8s ease-out forwards'; b.style.setProperty('height','0px'); setTimeout(()=>{ b.style.transition='height .8s ease-out'; b.style.height=b.style.getPropertyValue('--h'); },50); });
+  </script>
+  <div class="desc-box">
+    Üstteki ızgara <b>MITRE ATT&amp;CK tekniklerinin tespit durumunu</b>
+    (✓ tespit edildi / ~ kısmi / ✗ tespit edilemedi), alttaki çubuklar ise
+    zaman içindeki genel tespit oranı trendini gösterir (Ocak → Temmuz: %30 → %78).
+  </div>
+  <div class="cmdline">$ örnek CLI kullanımı</div>
+  <div class="code">$ breachsim run <span class="c1">--technique</span> T1059.001 <span class="c1">--target</span> WORKSTATION-TEST03
+<span class="c3">  Sonuç: TESPİT EDİLDİ (Sentinel Suite, 8 saniye içinde) ✓</span>
+$ breachsim gap-analysis
+<span class="c3">  Tespit edilemeyen 4 teknik bulundu -&gt; SIEM kural önerisi hazır</span></div>
+  <div class="cmdline">Örnek Backend Mantığı (PHP — SIEM tespit korelasyon servisi)</div>
+  <div class="php-box">&lt;?php
+// api/correlate.php — simülasyon sonrası SIEM'de olay var mı kontrol eder
+$techniqueId = $_GET['technique']; $target = $_GET['target']; $ts = $_GET['run_at'];
+$siemHit = SiemClient::query("technique:$techniqueId AND host:$target", $ts, $window = 60);
+$status = $siemHit ? 'detected' : 'missed';
+TrendDB::record($techniqueId, $status, $ts);
+echo json_encode(['status' =&gt; $status, 'latency_sec' =&gt; $siemHit['latency'] ?? null]);</div>
+  <p><span class="lang-pill">Python (çekirdek + MITRE entegrasyonu)</span><span class="lang-pill">TypeScript/React (dashboard)</span></p>
+</section>
+
+</main>
+
+<footer>
+  5 Özel Red Team Aracı — Görsel Önizleme · Statik HTML/CSS/JS mockup, PHP blokları örnek backend mantığını gösterir (çalıştırılmaz) · 25.07.2026
+</footer>
+
+<script>
+document.querySelectorAll('nav .tab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('nav .tab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('main .panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.t).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

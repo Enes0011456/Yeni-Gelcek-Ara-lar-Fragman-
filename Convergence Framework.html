@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Convergence Framework — Gelismis Sunum</title>
+<style>
+  @font-face {
+    font-family: 'Mono';
+    src: local('JetBrains Mono'), local('Fira Code'), local('SF Mono'), local('Consolas');
+  }
+
+  :root {
+    --g: #060a12;
+    --s: #0c1220;
+    --p: #131c2e;
+    --b: #1a2540;
+    --t: #c8d3e0;
+    --d: #4a5568;
+    --a: #4d9bf0;
+    --ad: #1e3a5f;
+    --sig: #e0944a;
+    --sigd: #5c3d1e;
+    --ok: #34d058;
+    --err: #e05555;
+    --mono: 'Mono', 'Fira Code', 'Consolas', monospace;
+    --sans: system-ui, -apple-system, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--g);
+    color: var(--t);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.65;
+    overflow-x: hidden;
+  }
+
+  /* ━━ NAV ━━ */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: rgba(6,10,18,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(77,155,240,0.1);
+    display: flex;
+    align-items: center;
+    padding: 0 2rem;
+    height: 52px;
+  }
+
+  .nav-logo {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--a);
+    letter-spacing: 2px;
+    margin-right: 2rem;
+  }
+
+  .nav-links { display: flex; gap: 4px; }
+  .nav-links a {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--d);
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+  }
+  .nav-links a:hover { color: var(--t); background: var(--p); }
+
+  .nav-status {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .nav-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* ━━ HERO ━━ */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 2rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    opacity: 0.025;
+    background-image:
+      linear-gradient(var(--a) 1px, transparent 1px),
+      linear-gradient(90deg, var(--a) 1px, transparent 1px);
+    background-size: 50px 50px;
+    mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, black, transparent);
+  }
+
+  .hero-glow {
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.08;
+    top: 20%; left: 50%;
+    transform: translateX(-50%);
+    background: var(--a);
+  }
+
+  .hero-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--a);
+    background: var(--ad);
+    padding: 4px 14px;
+    border-radius: 20px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    position: relative;
+  }
+
+  .hero-title {
+    font-family: var(--mono);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+    position: relative;
+  }
+  .hero-title span { color: var(--a); }
+
+  .hero-sub {
+    font-size: 16px;
+    color: var(--d);
+    text-align: center;
+    max-width: 600px;
+    line-height: 1.7;
+    position: relative;
+  }
+
+  /* TERMINAL */
+  .term {
+    margin-top: 3rem;
+    width: min(780px, 92vw);
+    background: var(--s);
+    border: 1px solid var(--b);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 100px rgba(77,155,240,0.06), 0 30px 80px rgba(0,0,0,0.5);
+  }
+
+  .term-bar {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 11px 16px;
+    background: var(--p);
+    border-bottom: 1px solid var(--b);
+  }
+  .term-dot { width: 11px; height: 11px; border-radius: 50%; }
+  .term-dot:nth-child(1) { background: #e05555; }
+  .term-dot:nth-child(2) { background: #e0944a; }
+  .term-dot:nth-child(3) { background: #34d058; }
+  .term-tab {
+    margin-left: 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--d);
+    background: var(--s);
+    padding: 3px 14px;
+    border-radius: 4px 4px 0 0;
+    border: 1px solid var(--b);
+    border-bottom: 1px solid var(--s);
+  }
+
+  .term-body {
+    padding: 20px 24px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.9;
+    min-height: 280px;
+  }
+  .tp { color: var(--ok); }
+  .tc { color: var(--t); }
+  .to { color: var(--d); }
+  .th { color: var(--sig); }
+  .ts { color: var(--ok); }
+  .ta { color: var(--a); }
+  .cursor {
+    display: inline-block;
+    width: 8px; height: 15px;
+    background: var(--a);
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* STATS */
+  .stats {
+    display: flex;
+    gap: 3rem;
+    margin-top: 3rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    position: relative;
+  }
+  .stat-box { text-align: center; }
+  .stat-n {
+    font-family: var(--mono);
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--a);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-l {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--d);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 4px;
+  }
+
+  /* ━━ SECTIONS ━━ */
+  .section {
+    padding: 6rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .s-eye {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--a);
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    margin-bottom: 8px;
+  }
+  .s-title {
+    font-family: var(--mono);
+    font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .s-line { width: 48px; height: 2px; background: var(--ad); margin-bottom: 3rem; }
+
+  /* ━━ TOOL CARDS ━━ */
+  .tool-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1px;
+    background: var(--b);
+    border: 1px solid var(--b);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .card {
+    background: var(--s);
+    padding: 1.6rem;
+    position: relative;
+    transition: background 0.25s;
+  }
+  .card:hover { background: var(--p); }
+  .card::after {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--b);
+    transition: background 0.25s;
+  }
+  .card:hover::after { background: var(--a); }
+
+  .card-id {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--d);
+    letter-spacing: 1.5px;
+    font-variant-numeric: tabular-nums;
+  }
+  .card-name {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--t);
+    margin: 4px 0;
+  }
+  .card-desc {
+    font-size: 13px;
+    color: var(--d);
+    line-height: 1.55;
+  }
+  .card-tags {
+    display: flex;
+    gap: 5px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .tag {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    letter-spacing: 0.4px;
+  }
+  .tag-py { color: var(--a); background: var(--ad); }
+  .tag-go { color: #00add8; background: rgba(0,173,216,0.12); }
+  .tag-ts { color: #3178c6; background: rgba(49,120,198,0.12); }
+  .tag-feat { color: var(--sig); background: var(--sigd); }
+
+  /* ━━ ARCHITECTURE ━━ */
+  .arch {
+    background: var(--s);
+    border: 1px solid var(--b);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .arch-row {
+    display: flex;
+    align-items: stretch;
+    border-bottom: 1px solid var(--b);
+    transition: background 0.2s;
+  }
+  .arch-row:last-child { border-bottom: none; }
+  .arch-row:hover { background: var(--p); }
+
+  .arch-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--a);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    font-weight: 700;
+    min-width: 120px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    border-right: 2px solid var(--ad);
+  }
+  .arch-content {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--d);
+    padding: 14px 20px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .arch-content em { color: var(--t); font-style: normal; font-weight: 600; }
+
+  /* ━━ FLOW ━━ */
+  .flow-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .flow-step {
+    background: var(--s);
+    border: 1px solid var(--b);
+    border-radius: 8px;
+    padding: 1.5rem;
+    position: relative;
+  }
+  .flow-step::before {
+    content: attr(data-step);
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--ad);
+    position: absolute;
+    top: 12px;
+    right: 16px;
+  }
+
+  .flow-step h4 {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--a);
+    margin-bottom: 6px;
+  }
+  .flow-step p {
+    font-size: 12px;
+    color: var(--d);
+    line-height: 1.6;
+  }
+  .flow-step code {
+    display: block;
+    margin-top: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--sig);
+    background: var(--g);
+    padding: 6px 10px;
+    border-radius: 4px;
+    overflow-x: auto;
+  }
+
+  /* ━━ CAPABILITIES TABLE ━━ */
+  .cap-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--s);
+    border: 1px solid var(--b);
+    border-radius: 8px;
+    overflow: hidden;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .cap-table th {
+    background: var(--p);
+    color: var(--a);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 700;
+  }
+  .cap-table td {
+    padding: 10px 16px;
+    border-top: 1px solid var(--b);
+    color: var(--d);
+    font-variant-numeric: tabular-nums;
+  }
+  .cap-table tr:hover td { background: var(--p); color: var(--t); }
+  .cap-table .tool-cell { color: var(--t); font-weight: 600; }
+  .cap-table .check { color: var(--ok); }
+  .cap-table .x { color: #4a5568; }
+
+  /* ━━ INTERACTIVE TABS ━━ */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: -1px;
+    position: relative;
+    z-index: 2;
+  }
+  .tab-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--d);
+    background: var(--s);
+    border: 1px solid var(--b);
+    border-bottom: none;
+    padding: 8px 18px;
+    cursor: pointer;
+    border-radius: 6px 6px 0 0;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .tab-btn.active { color: var(--a); background: var(--p); border-color: var(--a); }
+  .tab-btn:hover { color: var(--t); }
+
+  .tab-panel {
+    display: none;
+    background: var(--p);
+    border: 1px solid var(--b);
+    border-radius: 0 8px 8px 8px;
+    padding: 24px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 2;
+  }
+  .tab-panel.active { display: block; }
+
+  /* ━━ FOOTER ━━ */
+  footer {
+    padding: 4rem 2rem;
+    text-align: center;
+    border-top: 1px solid var(--b);
+    margin-top: 4rem;
+  }
+  .footer-brand {
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--d);
+    letter-spacing: 3px;
+  }
+  .footer-sub {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--d);
+    opacity: 0.5;
+  }
+
+  /* ━━ RESPONSIVE ━━ */
+  @media (max-width: 768px) {
+    .tool-grid { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    .arch-label { min-width: 80px; font-size: 9px; }
+    .cap-table { font-size: 10px; }
+    .cap-table th, .cap-table td { padding: 8px; }
+    .flow-container { grid-template-columns: 1fr; }
+    .section { padding: 3rem 1.2rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cursor, .nav-dot { animation: none; }
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--g); }
+  ::-webkit-scrollbar-thumb { background: var(--b); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">CONVERGENCE</div>
+  <div class="nav-links">
+    <a href="#tools">Araclar</a>
+    <a href="#arch">Mimari</a>
+    <a href="#caps">Yetenekler</a>
+    <a href="#start">Kurulum</a>
+    <a href="#flow">Is Akisi</a>
+  </div>
+  <div class="nav-status">
+    <div class="nav-dot"></div>
+    <span style="color:var(--ok); font-family:var(--mono); font-size:11px;">FRAMEWORK READY</span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+
+  <div class="hero-badge">RED TEAM OPERATIONS FRAMEWORK</div>
+  <h1 class="hero-title"><span>Convergence</span> Framework</h1>
+  <p class="hero-sub">15 entegre aractan olusan kapsamli saldiri simulasyon cercevesi. Kesiften raporlamaya, tek bir orkestrasyon merkezi altinda.</p>
+
+  <div class="term">
+    <div class="term-bar">
+      <div class="term-dot"></div>
+      <div class="term-dot"></div>
+      <div class="term-dot"></div>
+      <div class="term-tab">convergence</div>
+    </div>
+    <div class="term-body" id="terminal">
+      <div><span class="tp">root@axiom</span> <span class="ta">~/convergence</span> <span class="tc">$ ./convergence --init --all</span></div>
+      <div><span class="to">[*] Initializing Convergence Framework v1.0...</span></div>
+      <div><span class="ts">[+] NeuralRecon     loaded  [AI Recon Agent]</span></div>
+      <div><span class="ts">[+] GhostMesh       loaded  [Encrypted Mesh]</span></div>
+      <div><span class="ts">[+] MirrorForge     loaded  [Vishing Sim]</span></div>
+      <div><span class="ts">[+] QuantumVeil     loaded  [Traffic Stego]</span></div>
+      <div><span class="ts">[+] CodeSmith       loaded  [Exploit Dev]</span></div>
+      <div><span class="ts">[+] MindForge       loaded  [Insider Threat]</span></div>
+      <div><span class="ts">[+] ShadowChase     loaded  [Defense Bypass]</span></div>
+      <div><span class="ts">[+] TokenWeaver     loaded  [Covert Channel]</span></div>
+      <div><span class="ts">[+] NeuralSocial    loaded  [Phishing Gen]</span></div>
+      <div><span class="ts">[+] AdaptivePayload loaded  [Evasion Engine]</span></div>
+      <div><span class="ts">[+] ThreatActor     loaded  [APT Sim]</span></div>
+      <div><span class="ts">[+] CognitiveHunt   loaded  [Threat Hunt]</span></div>
+      <div><span class="ts">[+] ArchitectMaster loaded  [Red Team Plan]</span></div>
+      <div><span class="ts">[+] ForensicShield  loaded  [Anti-Forensics]</span></div>
+      <div><span class="ts">[+] Convergence Hub loaded  [Orchestrator]</span></div>
+      <div>&nbsp;</div>
+      <div><span class="th">[!] 15/15 tools online. API: localhost:8443</span></div>
+      <div><span class="tp">root@axiom</span> <span class="ta">~/convergence</span> <span class="tc">$ </span><span class="cursor"></span></div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-box"><div class="stat-n">15</div><div class="stat-l">Arac</div></div>
+    <div class="stat-box"><div class="stat-n">4</div><div class="stat-l">Dil</div></div>
+    <div class="stat-box"><div class="stat-n">16</div><div class="stat-l">MITRE Teknik</div></div>
+    <div class="stat-box"><div class="stat-n">3</div><div class="stat-l">APT Profil</div></div>
+    <div class="stat-box"><div class="stat-n">8</div><div class="stat-l">Kacinma Strateji</div></div>
+  </div>
+</section>
+
+<!-- TOOLS -->
+<section class="section" id="tools">
+  <div class="s-eye">Arac Envanteri</div>
+  <h2 class="s-title">Framework Bilesenleri</h2>
+  <div class="s-line"></div>
+
+  <div class="tool-grid">
+    <div class="card">
+      <div class="card-id">TOOL-01</div>
+      <div class="card-name">NeuralRecon</div>
+      <div class="card-desc">LLM destekli otonom kesif ajani. Nmap tarama, karar motoru, onay kapisi ile operatorce kontrol.</div>
+      <div class="card-tags"><span class="tag tag-py">Python</span><span class="tag tag-feat">LLM</span><span class="tag tag-feat">asyncio</span></div>
+    </div>
+    <div class="card">
+      <div class="card-id">TOOL-02</div>
+      <div class="card-name">GhostMesh</div>
+      <div class="card-desc">ChaCha20-Poly1305 sifreli P2P mesh ag. Gateway secimi, heartbeat, peer yonetimi.</div>
+      <div class="card-tags"><span class="tag tag-go">Go 1.21</span><span class="tag tag-feat">P2P</span><span class="tag tag-feat">Crypto</span></div>
+    </div>
+    <div class="card">
+      <div class="card-id">TOOL-03</div>
+      <div class="card-name">MirrorForge</div>
+      <div class="card-desc">Vishing kampanya simulatoru. 5 senaryo, transkript analizi, raporlama motoru.</div>
+      <div class="card-tags"><span class="tag tag-py">Python</span><span class="tag tag-feat">Social Eng</span></div>
+    </div>
+    <div class="card">
+      <div class="card-id">TOOL-04</div>
+      <div class="card-name">QuantumVeil</div>
+      <div class="card-desc">DNS, HTTP, WebSocket, Cookie protokollerinde veri gizleme ve trafik taklidi.</div>
+      <div class="card-tags"><span class="tag tag-py">Python</span><span class="tag tag-feat">Steganography</span></div>
+    </div>
+    <div class="card">
+      <div class="card-id">TOOL-05</div>
+      <div class="card-name">CodeSmith</div>
+      <div class="card-desc">CVE veritabani sablonlarindan otomatik exploit kodu uretimi ve sandbox dogrulama.</div>
+      <div class="card-tags"><span class="tag tag-py">Python</span><span class="tag tag-feat">Exploit Dev</span></div>
+    </div>
+    <div class="card">
+      <div class="card-id">TOOL-06</div>
+      <div class="card-name">MindForge</div>
+      <div class="card-desc">Insider tehdit simulasyonu. Go agent ile davranis emulasyonu, SIEM/DLP korelasyonu.</div>
+      <div class="card-tags"><span class="tag tag-py">Python</span><span class="tag tag-go">Go Agent</span></div>
+    </div>
+    <div class="card">
+      <div class="card-id">TOOL-07</div>
+      <div class="card-name">ShadowChase</div>
+      <div class="card-desc">EDR davranissal anomali testi. 16 MITRE teknigi, esik bosluk analizi, isi haritasi.</div>
+      <div class="card-tags"><span class="tag tag-py">Python</span><span class="tag tag-feat">MITRE ATT&CK</span></div>
+    </div>
+    <div class="card">
+      <div class="card-id">TOOL-08</div>
+      <div class="card-name">TokenWeaver</div>
+      <div class="card-desc">PDF, Image LSB, HTTP Header, Timing kanallari ile gizli veri tasima ve DLP testi.</div>
+      <div class="card-tags"><span class="tag tag-py">Python</span><span class="tag tag-feat">Covert Channel</span></div>
+    </div>
+    <div class="card">
+      <div class="card-id">TOOL-09</div>
+      <div class="card-name">NeuralSocial</div>
+      <div class="card-desc">Kurum e-posta stili analizi ve farkindahk egitimi icin phishing simulasyon e-posta ureteci.</div>
+      <div class="card-tags"><span class="tag tag-py">Python</span><span class="tag tag-feat">NLP</span></div>
+    </div>
+    <div class="card">
+      <div class="card-id">TOOL-10</div>
+      <div class="card-name">AdaptivePayload</div>
+      <div class="card-desc">ML geri beslemeli 8 farkli kacinma stratejisi. Process hollowing, PID spoof, DLL sideload ve daha fazlasi.</div>
+      <div class="card-tags"><span class="tag tag-py">Python</span><span class="tag tag-feat">ML</span><span class="tag tag-feat">Evasion</span></div>
+    </div>
+    <div class="card">
+      <div class="card-id">TOOL-11</div>
+      <div class="card-name">ThreatActor</div>
+      <div class="card-desc">APT28, APT29, Lazarus kill chain simulasyonu. TI/EDR/SIEM tespit korelasyonu.</div>
+      <div class="card-tags"><span class="tag tag-py">Python</span><span class="tag tag-feat">APT</span><span class="tag tag-feat">MITRE</span></div>
+    </div>
+    <div class="card">
+      <div class="card-id">TOOL-12</div>
+      <div class="card-name">CognitiveHunt</div>
+      <div class="card-desc">Tehdit avi asistani. Hipotez uretimi, Splunk/Elastic/Sentinel SIEM sorgu olusturma.</div>
+      <div class="card-tags"><span class="tag tag-py">Python</span><span class="tag tag-feat">SIEM</span><span class="tag tag-feat">LLM</span></div>
+    </div>
+    <div class="card">
+      <div class="card-id">TOOL-13</div>
+      <div class="card-name">ArchitectMaster</div>
+      <div class="card-desc">Otomatik red team plan motoru. Ag kesfi, teknoloji yigini bazli saldiri planlamasi.</div>
+      <div class="card-tags"><span class="tag tag-py">Python</span><span class="tag tag-feat">Planning</span></div>
+    </div>
+    <div class="card">
+      <div class="card-id">TOOL-14</div>
+      <div class="card-name">ForensicShield</div>
+      <div class="card-desc">10 forensik artefakt turu, Autopsy/EnCase/Volatility/KAPE tespit simulasyonu.</div>
+      <div class="card-tags"><span class="tag tag-py">Python</span><span class="tag tag-feat">DFIR</span></div>
+    </div>
+    <div class="card">
+      <div class="card-id">TOOL-15</div>
+      <div class="card-name">Convergence Hub</div>
+      <div class="card-desc">Master orkestrasyon merkezi. FastAPI + React dashboard, REST API, denetim loglari.</div>
+      <div class="card-tags"><span class="tag tag-py">Python</span><span class="tag tag-ts">TypeScript</span><span class="tag tag-feat">FastAPI</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section class="section" id="arch">
+  <div class="s-eye">Mimari</div>
+  <h2 class="s-title">Sistem Katmanlari</h2>
+  <div class="s-line"></div>
+
+  <div class="arch">
+    <div class="arch-row">
+      <div class="arch-label">Arayuz</div>
+      <div class="arch-content"><em>React Dashboard</em> | <em>Tkinter GUI</em> | <em>CLI (argparse)</em> | <em>GUI Launcher</em></div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-label">API</div>
+      <div class="arch-content"><em>FastAPI REST</em> | localhost:8443 | JWT auth | HMAC audit | WebSocket</div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-label">Orkestrasyon</div>
+      <div class="arch-content"><em>Plan Templates</em> | tool chaining | parallel execution | <em>report engine</em></div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-label">Araclar</div>
+      <div class="arch-content"><em>15 modul</em> | Python 3.11 | Go 1.21 | TypeScript 5.2 | SQLite per-tool</div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-label">Veri</div>
+      <div class="arch-content"><em>SQLite</em> | JSON export | <em>HMAC-signed audit trail</em> | canary tagging</div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-label">Iletisim</div>
+      <div class="arch-content"><em>ChaCha20-Poly1305</em> mesh | REST callbacks | <em>P2P gossip</em> protocol</div>
+    </div>
+  </div>
+</section>
+
+<!-- CAPABILITIES -->
+<section class="section" id="caps">
+  <div class="s-eye">Karsilastirma</div>
+  <h2 class="s-title">Arac Yetenek Matrisi</h2>
+  <div class="s-line"></div>
+
+  <div style="overflow-x: auto;">
+    <table class="cap-table">
+      <thead>
+        <tr>
+          <th>Arac</th>
+          <th>CLI</th>
+          <th>GUI</th>
+          <th>API</th>
+          <th>DB</th>
+          <th>ML</th>
+          <th>MITRE</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="tool-cell">NeuralRecon</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="x">-</td></tr>
+        <tr><td class="tool-cell">GhostMesh</td><td class="check">&#10003;</td><td class="x">-</td><td class="x">-</td><td class="x">-</td><td class="x">-</td><td class="x">-</td></tr>
+        <tr><td class="tool-cell">MirrorForge</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="x">-</td><td class="x">-</td></tr>
+        <tr><td class="tool-cell">QuantumVeil</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="x">-</td><td class="x">-</td><td class="x">-</td></tr>
+        <tr><td class="tool-cell">CodeSmith</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="x">-</td><td class="x">-</td></tr>
+        <tr><td class="tool-cell">MindForge</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="x">-</td><td class="x">-</td></tr>
+        <tr><td class="tool-cell">ShadowChase</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="x">-</td><td class="check">&#10003;</td></tr>
+        <tr><td class="tool-cell">TokenWeaver</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="x">-</td><td class="x">-</td><td class="x">-</td></tr>
+        <tr><td class="tool-cell">NeuralSocial</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="x">-</td><td class="check">&#10003;</td><td class="x">-</td></tr>
+        <tr><td class="tool-cell">AdaptivePayload</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="x">-</td><td class="check">&#10003;</td><td class="x">-</td></tr>
+        <tr><td class="tool-cell">ThreatActor</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="x">-</td><td class="check">&#10003;</td></tr>
+        <tr><td class="tool-cell">CognitiveHunt</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+        <tr><td class="tool-cell">ArchitectMaster</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="x">-</td><td class="x">-</td></tr>
+        <tr><td class="tool-cell">ForensicShield</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="x">-</td><td class="x">-</td></tr>
+        <tr><td class="tool-cell">Convergence Hub</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="x">-</td><td class="x">-</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- QUICKSTART -->
+<section class="section" id="start">
+  <div class="s-eye">Hizli Baslangic</div>
+  <h2 class="s-title">Kurulum ve Calistirma</h2>
+  <div class="s-line"></div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(event, 'tab-gui')">GUI Launcher</button>
+    <button class="tab-btn" onclick="switchTab(event, 'tab-hub')">Convergence Hub</button>
+    <button class="tab-btn" onclick="switchTab(event, 'tab-single')">Tek Arac</button>
+    <button class="tab-btn" onclick="switchTab(event, 'tab-go')">Go Araclari</button>
+  </div>
+
+  <div class="tab-panel active" id="tab-gui">
+    <div><span class="to"># Master GUI Launcher -- tum araclari tek panelden yonet</span></div>
+    <div><span class="tp">$</span> <span class="tc">cd /home/enes/Desktop/araclar</span></div>
+    <div><span class="tp">$</span> <span class="tc">python3 gui_launcher.py</span></div>
+    <div>&nbsp;</div>
+    <div><span class="to"># Her aracin GUI ve CLI butonlari mevcut</span></div>
+    <div><span class="to"># Arac secip GUI'yi baslatmak icin tiklayin</span></div>
+  </div>
+
+  <div class="tab-panel" id="tab-hub">
+    <div><span class="to"># Convergence Hub -- API + Dashboard</span></div>
+    <div><span class="tp">$</span> <span class="tc">cd 15_convergence/backend</span></div>
+    <div><span class="tp">$</span> <span class="tc">pip install -r requirements.txt</span></div>
+    <div><span class="tp">$</span> <span class="tc">python convergence.py</span></div>
+    <div>&nbsp;</div>
+    <div><span class="to"># API: https://localhost:8443</span></div>
+    <div><span class="to"># Master GUI:</span></div>
+    <div><span class="tp">$</span> <span class="tc">cd 15_convergence && python gui.py</span></div>
+  </div>
+
+  <div class="tab-panel" id="tab-single">
+    <div><span class="to"># Tek arac -- CLI</span></div>
+    <div><span class="tp">$</span> <span class="tc">cd 01_neuralrecon</span></div>
+    <div><span class="tp">$</span> <span class="tc">pip install -r requirements.txt</span></div>
+    <div><span class="tp">$</span> <span class="tc">python neuralrecon.py scan --scope 10.0.0.0/24</span></div>
+    <div>&nbsp;</div>
+    <div><span class="to"># Tek arac -- GUI</span></div>
+    <div><span class="tp">$</span> <span class="tc">python gui.py</span></div>
+  </div>
+
+  <div class="tab-panel" id="tab-go">
+    <div><span class="to"># GhostMesh (Go)</span></div>
+    <div><span class="tp">$</span> <span class="tc">cd 02_ghostmesh</span></div>
+    <div><span class="tp">$</span> <span class="tc">go mod tidy</span></div>
+    <div><span class="tp">$</span> <span class="tc">go build -o ghostmesh ./cmd/</span></div>
+    <div><span class="tp">$</span> <span class="tc">./ghostmesh keygen</span></div>
+    <div><span class="tp">$</span> <span class="tc">./ghostmesh node --listen :9001 --key key.bin</span></div>
+    <div>&nbsp;</div>
+    <div><span class="to"># MindForge Agent (Go)</span></div>
+    <div><span class="tp">$</span> <span class="tc">cd 06_mindforge/cmd/agent</span></div>
+    <div><span class="tp">$</span> <span class="tc">go build -o mindforge-agent .</span></div>
+    <div><span class="tp">$</span> <span class="tc">./mindforge-agent --target-dir /path --flush-interval 30</span></div>
+  </div>
+</section>
+
+<!-- WORKFLOW -->
+<section class="section" id="flow">
+  <div class="s-eye">Is Akisi</div>
+  <h2 class="s-title">Tipik Red Team Operasyonu</h2>
+  <div class="s-line"></div>
+
+  <div class="flow-container">
+    <div class="flow-step" data-step="01">
+      <h4>Kesif</h4>
+      <p>NeuralRecon ile hedef ag taramasi. LLM karar motoru sonraki adimlari belirler.</p>
+      <code>python neuralrecon.py scan --scope 10.0.0.0/24</code>
+    </div>
+    <div class="flow-step" data-step="02">
+      <h4>Planlama</h4>
+      <p>ArchitectMaster kesif sonuclarina gore saldiri plani uretir.</p>
+      <code>python architectmaster.py plan --tech-stack windows-ad</code>
+    </div>
+    <div class="flow-step" data-step="03">
+      <h4>Altyapi</h4>
+      <p>GhostMesh ile sifreli C2 mesh agi kurulur. QuantumVeil ile gizli kanallar olusturulur.</p>
+      <code>./ghostmesh node --listen :9001 --key key.bin</code>
+    </div>
+    <div class="flow-step" data-step="04">
+      <h4>Erisim</h4>
+      <p>NeuralSocial phishing e-postalari uretir. MirrorForge vishing kampanyasi baslatir.</p>
+      <code>python neuralsocial.py generate --scenario password-reset</code>
+    </div>
+    <div class="flow-step" data-step="05">
+      <h4>Sizma</h4>
+      <p>CodeSmith exploit uretir. AdaptivePayload EDR kacinma stratejileri uygular.</p>
+      <code>python adaptivepayload.py simulate --strategy process-hollowing</code>
+    </div>
+    <div class="flow-step" data-step="06">
+      <h4>Degerlendirme</h4>
+      <p>ShadowChase/ThreatActor tespit testi. CognitiveHunt avlanma hipotezleri. ForensicShield iz analizi.</p>
+      <code>python shadowchase.py test-all --intensity 50</code>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-brand">CONVERGENCE</div>
+  <div class="footer-sub">Red Team Operations Framework -- Yalnizca yetkili guvenlik testleri icin</div>
+</footer>
+
+<script>
+function switchTab(e, tabId) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,989 @@
+
+<!-- saved from url=(0055)file:///home/enes/Desktop/ToolKit/farkl%C4%B1.html#boot -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>HACK IS GOOD — ToolKit OS</title>
+<style>
+:root {
+  --void: #0b0f1a;
+  --panel: #111730;
+  --panel-edge: #1a2240;
+  --smoke: #4a5580;
+  --ash: #2a3355;
+  --fog: #8090bb;
+  --phosphor: #00ff9f;
+  --phosphor-dim: rgba(0, 255, 159, 0.12);
+  --phosphor-glow: rgba(0, 255, 159, 0.3);
+  --alert: #ff3366;
+  --warn: #ffaa22;
+  --white: #d0daf0;
+/* --- MİMARİ MAVİ TONLARI Blue Eyes Tadında Renk Paleti --- */
+  --cyber-blue: #0252df;
+  --cyber-blue-dim: rgba(2, 82, 223, 0.12);
+  --cyber-blue-glow: rgba(2, 82, 223, 0.4);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { background: var(--void); color: var(--white); }
+
+body {
+  font-family: 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', monospace;
+  line-height: 1.6;
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* ══ ambient canvas ══ */
+#ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ══ CRT vignette + scanlines ══ */
+.crt-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, transparent 0, rgba(0,255,159,0.015) 1px, transparent 2px, transparent 4px),
+    radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.45) 100%);
+}
+
+.page-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* ══ BOOT SEQUENCE ══ */
+.boot {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3rem clamp(1.5rem, 6vw, 8rem);
+  position: relative;
+}
+
+.boot-line {
+  font-size: clamp(0.7rem, 1.3vw, 0.9rem);
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 0.4s, transform 0.4s;
+  margin-bottom: 0.3rem;
+}
+
+.boot-line.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.boot-line .ok { color: var(--phosphor); }
+.boot-line .fail { color: var(--alert); }
+.boot-line .warn { color: var(--warn); }
+.boot-line .dim { color: var(--smoke); }
+.boot-line .path { color: var(--fog); }
+
+.boot-logo {
+  margin-bottom: 2.5rem;
+  opacity: 0;
+  transition: opacity 0.8s ease 0.2s;
+}
+
+.boot-logo.show { opacity: 1; }
+
+
+
+/*Yeni Kısım Mavi ile olan*/
+
+.boot-logo pre {
+  font-size: clamp(0.3rem, 0.95vw, 0.65rem);
+  line-height: 1.2;
+  color: var(--cyber-blue); /* Yeni mavi değişkenimiz */
+  text-shadow: 0 0 15px var(--cyber-blue-glow), 0 0 40px rgba(2,82,223,0.15);
+  white-space: pre;
+}
+
+
+
+/* Eski kısım
+.boot-logo pre {
+  font-size: clamp(0.3rem, 0.95vw, 0.65rem);
+  line-height: 1.2;
+  color: var(--phosphor);
+  text-shadow: 0 0 15px var(--phosphor-glow), 0 0 40px rgba(0,255,159,0.1);
+  white-space: pre;
+}
+
+*/
+
+
+.boot-prompt {
+  margin-top: 2rem;
+  font-size: 1rem;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+.boot-prompt.show { opacity: 1; }
+
+.boot-prompt .cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  background: var(--phosphor);
+  vertical-align: text-bottom;
+  animation: cursor-blink 1s step-end infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.scroll-cue {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.8s;
+}
+
+.scroll-cue.show { opacity: 1; }
+
+.scroll-cue span {
+  font-size: 0.55rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--smoke);
+}
+
+.scroll-chevron {
+  width: 12px;
+  height: 12px;
+  border-right: 1px solid var(--phosphor);
+  border-bottom: 1px solid var(--phosphor);
+  transform: rotate(45deg);
+  animation: chevron-bob 2s ease infinite;
+}
+
+@keyframes chevron-bob {
+  0%, 100% { transform: rotate(45deg) translate(0); opacity: 0.4; }
+  50% { transform: rotate(45deg) translate(3px, 3px); opacity: 1; }
+}
+
+/* ══ SECTION PANELS ══ */
+.s-panel {
+  padding: clamp(3rem, 8vw, 6rem) clamp(1.5rem, 6vw, 8rem);
+  position: relative;
+}
+
+.s-panel + .s-panel {
+  border-top: 1px solid var(--panel-edge);
+}
+
+.s-eyebrow {
+  font-size: 0.55rem;
+  letter-spacing: 0.5em;
+  text-transform: uppercase;
+  color: var(--phosphor);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.s-eyebrow::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--phosphor-dim), transparent 60%);
+}
+
+.s-heading {
+  font-size: clamp(1.5rem, 4vw, 2.8rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--white);
+  margin-bottom: 1rem;
+  text-wrap: balance;
+}
+
+.s-heading em {
+  font-style: normal;
+  color: var(--phosphor);
+  text-shadow: 0 0 20px var(--phosphor-glow);
+}
+
+.s-sub {
+  font-size: 0.82rem;
+  color: var(--smoke);
+  max-width: 55ch;
+  margin-bottom: 2.5rem;
+  line-height: 1.8;
+}
+
+/* ══ TOOL SHOWCASE (asymmetric) ══ */
+.tool-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (min-width: 800px) {
+  .tool-row { grid-template-columns: 1fr 1.1fr; }
+  .tool-row.flip { direction: rtl; }
+  .tool-row.flip > * { direction: ltr; }
+}
+
+.tool-info {
+  padding: 1.5rem 0;
+}
+
+.tool-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.tool-name .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--phosphor);
+  box-shadow: 0 0 8px var(--phosphor-glow);
+  animation: pulse-dot 2s ease infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+}
+
+.tool-desc {
+  font-size: 0.8rem;
+  color: var(--fog);
+  margin-bottom: 1.5rem;
+  line-height: 1.8;
+}
+
+.feat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+@media (max-width: 500px) {
+  .feat-grid { grid-template-columns: 1fr; }
+}
+
+.feat-item {
+  padding: 0.7rem 0.9rem;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  font-size: 0.7rem;
+  color: var(--fog);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.feat-item:hover {
+  border-color: var(--phosphor);
+  background: rgba(0, 255, 159, 0.03);
+}
+
+.feat-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--phosphor);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.feat-item:hover::before { opacity: 1; }
+
+.feat-item strong {
+  display: block;
+  color: var(--white);
+  font-size: 0.72rem;
+  margin-bottom: 0.15rem;
+}
+
+/* ══ LIVE TERMINAL WINDOW ══ */
+.term-window {
+  background: var(--void);
+  border: 1px solid var(--panel-edge);
+  overflow: hidden;
+  position: relative;
+}
+
+.term-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.5rem 0.8rem;
+  background: var(--panel);
+  border-bottom: 1px solid var(--panel-edge);
+}
+
+.term-dot { width: 8px; height: 8px; border-radius: 50%; }
+.term-dot.r { background: var(--alert); }
+.term-dot.y { background: var(--warn); }
+.term-dot.g { background: var(--phosphor); }
+
+.term-title {
+  flex: 1;
+  text-align: center;
+  font-size: 0.6rem;
+  color: var(--smoke);
+  letter-spacing: 0.1em;
+}
+
+.term-body {
+  padding: 1rem;
+  font-size: 0.72rem;
+  line-height: 1.7;
+  height: 320px;
+  overflow: hidden;
+  position: relative;
+}
+
+.term-body .line {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.term-body .line.on {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.term-body .g { color: var(--phosphor); }
+.term-body .r { color: var(--alert); }
+.term-body .w { color: var(--warn); }
+.term-body .d { color: var(--smoke); }
+.term-body .f { color: var(--fog); }
+.term-body .wh { color: var(--white); }
+
+/* ══ STATS ROW ══ */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1px;
+  background: var(--panel-edge);
+  margin-top: 3rem;
+}
+
+.stat-cell {
+  background: var(--panel);
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.stat-val {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 700;
+  color: var(--phosphor);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 15px var(--phosphor-glow);
+}
+
+.stat-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--smoke);
+  margin-top: 0.3rem;
+}
+
+/* ══ PIPE / ARCHITECTURE ══ */
+.arch-visual {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 2rem;
+  max-width: 700px;
+}
+
+.arch-node {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1.2rem;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  margin-bottom: -1px;
+  position: relative;
+  transition: background 0.3s, border-color 0.3s;
+}
+
+.arch-node:hover {
+  background: rgba(0, 255, 159, 0.04);
+  border-color: var(--phosphor);
+  z-index: 1;
+}
+
+.arch-icon {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--ash);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  color: var(--phosphor);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.arch-label {
+  font-size: 0.78rem;
+  color: var(--white);
+  font-weight: 600;
+}
+
+.arch-desc {
+  font-size: 0.65rem;
+  color: var(--smoke);
+}
+
+.arch-arrow {
+  width: 1px;
+  height: 18px;
+  background: var(--phosphor);
+  margin-left: 2.3rem;
+  position: relative;
+}
+
+.arch-arrow::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: -3px;
+  width: 7px;
+  height: 7px;
+  border-right: 1px solid var(--phosphor);
+  border-bottom: 1px solid var(--phosphor);
+  transform: rotate(45deg);
+}
+
+/* ══ INSTALL ══ */
+.install-card {
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  padding: 2rem;
+  max-width: 600px;
+  margin-top: 2rem;
+}
+
+.install-card .step {
+  font-size: 0.78rem;
+  margin-bottom: 0.4rem;
+}
+
+.install-card .p { color: var(--phosphor); }
+.install-card .c { color: var(--white); }
+.install-card .cm { color: var(--smoke); }
+
+/* ══ FOOTER ══ */
+.site-footer {
+  padding: 2.5rem clamp(1.5rem, 6vw, 8rem);
+  border-top: 1px solid var(--panel-edge);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.footer-sig {
+  font-size: 0.7rem;
+  color: var(--smoke);
+}
+
+.footer-sig strong {
+  color: var(--phosphor);
+  font-weight: 600;
+}
+
+.footer-links {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.65rem;
+}
+
+.footer-links a {
+  color: var(--fog);
+  text-decoration: none;
+  letter-spacing: 0.1em;
+  transition: color 0.2s;
+}
+
+.footer-links a:hover { color: var(--phosphor); }
+.footer-links a:focus-visible { outline: 1px solid var(--phosphor); outline-offset: 3px; }
+
+/* ══ scroll-reveal ══ */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal.vis {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ══ Responsive ══ */
+@media (max-width: 600px) {
+  .boot { padding: 2rem 1.2rem; }
+  .s-panel { padding: 2.5rem 1.2rem; }
+  .term-body { height: 260px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
+
+</head><body><canvas id="ambient" width="1920" height="961"></canvas>
+<div class="crt-overlay"></div>
+
+<div class="page-content">
+
+
+<!-- Eski Tasarım kısmı :
+
+ ██░ ██  ▄▄▄       ▄████▄   ██ ▄█▀    ██▓  ██████
+▓██░ ██▒▒████▄    ▒██▀ ▀█   ██▄█▒    ▓██▒▒██    ▒
+▒██▀▀██░▒██  ▀█▄  ▒▓█   ▄ ▓███▄░    ▒██▒░ ▓██▄
+░▓█ ░██ ░██▄▄▄▄██ ▒▓▓▄ ▄██▒▓██ █▄    ░██░  ▒   ██▒
+░▓█▒░██▓ ▓█   ▓██▒▒ ▓███▀ ░▒██▒ █▄   ░██░▒██████▒▒
+ ▒ ░░▒░▒ ▒▒   ▓▒█░░ ░▒ ▒  ░▒ ▒▒ ▓▒   ░▓  ▒ ▒▓▒ ▒ ░
+
+           ▄▄▄▄▄▄▄  ▄▄▄▄▄▄  ▄▄▄▄▄▄  ▄▄▄
+          █       ██      ██      ██   █
+          █▄     ▄██  ▄   ██  ▄   ██   █
+           █   █  █ █▄█   █ █▄█   █   █
+           █   █  █      ▄█      ▄█   █▄▄▄
+           █   █  █  ▄   ██  ▄   ██       █
+           █▄▄▄█  █▄█ █▄▄██▄█ █▄▄██▄▄▄▄▄▄█
+
+-->
+
+
+
+<!-- ════════════ BOOT SEQUENCE ════════════ -->
+<section class="boot" id="boot">
+  <div class="boot-logo show" id="boot-logo"><pre> ██░ ██  ▄▄▄       ▄████▄   ██ ▄█▀    ██▓  ██████    
+▓██░ ██▒▒████▄    ▒██▀ ▀█   ██▄█▒    ▓██▒▒██    ▒    
+▒██▀▀██░▒██  ▀█▄  ▒▓█   ▄ ▓███▄░    ▒██▒░ ▓██▄       
+░▓█ ░██ ░██▄▄▄▄██ ▒▓▓▄ ▄██▒▓██ █▄    ░██░  ▒   ██▒   
+░▓█▒░██▓ ▓█   ▓██▒▒ ▓███▀ ░▒██▒ █▄   ░██░▒██████▒▒   
+ ▒ ░░▒░▒ ▒▒   ▓▒█░░ ░▒ ▒  ░▒ ▒▒ ▓▒   ░▓  ▒ ▒▓▒ ▒ ░   
+ ▒ ░▒░ ░  ▒   ▒▒ ░  ░  ▒  ░ ░▒ ▒░    ▒ ░░ ░▒  ░ ░    
+ ░  ░░ ░  ░   ▒   ░     ░ ░░ ░     ▒ ░░  ░  ░  ░      
+ ░   ░  ░      ░  ░░     ░  ░       ░        ░  ░      
+
+   ▄████  ▒█████   ▒█████  ▓█████▄ 
+  ██▒ ▀█▒▒██▒  ██▒▒██▒  ██▒▒██▀ ██▌
+ ▒██░▄▄▄░▒██░  ██▒▒██░  ██▒░██   █▌
+ ░▓█  ██▓▒██   ██░▒██   ██░░▓█▄   ▌
+ ░▒▓███▀▒░ ████▓▒░░ ████▓▒░░▒████▓ 
+  ░▒   ▒ ░ ▒░▒░▒░ ░ ▒░▒░▒░  ▒▒▓  ▒ 
+   ░   ░   ░ ▒ ▒░   ░ ▒ ▒░  ░ ▒  ▒ 
+ ░ ░   ░ ░ ░ ░ ▒  ░ ░ ░ ▒   ░ ░  ░ 
+       ░     ░ ░      ░ ░      ░   
+
+</pre>
+  </div>
+
+  <div id="boot-lines">
+    
+    <div class="boot-line show"><span class="dim">[</span><span class="ok">BOOT</span><span class="dim">]</span> ToolKit OS v2.0 initializing...</div>
+    <div class="boot-line show"><span class="dim">[</span><span class="ok"> OK </span><span class="dim">]</span> Kernel module: <span class="path">cryptography.engine</span> loaded</div>
+    <div class="boot-line show"><span class="dim">[</span><span class="ok"> OK </span><span class="dim">]</span> Kernel module: <span class="path">gemini.ai.core</span> loaded</div>
+    <div class="boot-line show"><span class="dim">[</span><span class="ok"> OK </span><span class="dim">]</span> AES-256-GCM cipher suite .................. <span class="ok">ACTIVE</span></div>
+    <div class="boot-line show"><span class="dim">[</span><span class="ok"> OK </span><span class="dim">]</span> ChaCha20-Poly1305 stream cipher ........... <span class="ok">ACTIVE</span></div>
+    <div class="boot-line show"><span class="dim">[</span><span class="ok"> OK </span><span class="dim">]</span> XOR obfuscation layer ..................... <span class="ok">ACTIVE</span></div>
+    <div class="boot-line show"><span class="dim">[</span><span class="ok"> OK </span><span class="dim">]</span> Steganography engine ...................... <span class="ok">ACTIVE</span></div>
+    <div class="boot-line show"><span class="dim">[</span><span class="ok"> OK </span><span class="dim">]</span> Blue Eyes AI subsystem .................... <span class="ok">ONLINE</span></div>
+    <div class="boot-line show"><span class="dim">[</span><span class="ok"> OK </span><span class="dim">]</span> PBKDF2 key derivation (200K iter) ......... <span class="ok">READY</span></div>
+    <div class="boot-line show"><span class="dim">[</span><span class="warn">WARN</span><span class="dim">]</span> API key not configured — <span class="warn">offline fallback available</span></div>
+    <div class="boot-line show"><span class="dim">[</span><span class="ok"> OK </span><span class="dim">]</span> Terminal UI ...... <span class="ok">UP</span>  |  GUI (tkinter) ... <span class="ok">UP</span></div>
+    <div class="boot-line show" style="margin-top:0.6rem"><span class="ok">&gt;&gt;&gt; SYSTEM READY — 2 tools loaded, 0 errors</span></div>
+  </div>
+
+  <div class="boot-prompt show" id="boot-prompt">
+    <span class="ok">root@toolkit</span><span class="dim">:</span><span class="path">~</span><span class="dim">$</span> <span class="cursor"></span>
+  </div>
+
+  <div class="scroll-cue show" id="scroll-cue">
+    <span>scroll</span>
+    <div class="scroll-chevron"></div>
+  </div>
+</section>
+
+<!-- ════════════ AES_TOOL ════════════ -->
+<section class="s-panel reveal vis">
+  <div class="s-eyebrow">Sifreleme Motoru</div>
+  <h2 class="s-heading"><em>AES_Tool— Katmanli Sifreleme Kasasi </em>  </h2>
+  <p class="s-sub">Tek katman yetmez. AES-256, ChaCha20 ve XOR'u ust uste koyarak verini askeri duzeyde koruma altina al. Dosya, metin, steganografi — hepsi tek aracta.</p>
+
+  <div class="tool-row">
+    <div class="tool-info">
+      <div class="feat-grid">
+        <div class="feat-item"><strong>AES-256-CBC</strong>Klasik blok sifreleme, PKCS7 padding</div>
+        <div class="feat-item"><strong>AES-256-GCM</strong>Authenticated encryption, veri butunlugu</div>
+        <div class="feat-item"><strong>ChaCha20</strong>Poly1305 ile ikinci guvenlik katmani</div>
+        <div class="feat-item"><strong>XOR Maskeleme</strong>Ucuncu katman obfuscation</div>
+        <div class="feat-item"><strong>Steganografi</strong>Zero-width Unicode gizleme</div>
+        <div class="feat-item"><strong>Dosya Sifreleme</strong>Her formati destekler (.enc)</div>
+        <div class="feat-item"><strong>Sifre Analizi</strong>5 seviye guc olcer</div>
+        <div class="feat-item"><strong>Modul Kullanim</strong>CryptoEngine import et</div>
+      </div>
+    </div>
+
+    <div class="term-window">
+      <div class="term-bar">
+        <div class="term-dot r"></div>
+        <div class="term-dot y"></div>
+        <div class="term-dot g"></div>
+        <span class="term-title">AES_Tool:~$</span>
+      </div>
+      <div class="term-body" id="term-aes">
+        <div class="line on"><span class="g">AES_Tool:~$</span> <span class="wh">sifrele</span></div>
+        <div class="line on"><span class="d">──── SIFRELE ────</span></div>
+        <div class="line on"><span class="f">Metin:</span> <span class="wh">Gizli mesaj burada</span></div>
+        <div class="line on"><span class="f">AES Modu:</span> <span class="g">[2] GCM — Authenticated</span></div>
+        <div class="line on"><span class="g">[Katman 1]</span> <span class="f">AES-256 sifresi:</span> <span class="d">********</span></div>
+        <div class="line on"><span class="f">Guc:</span> <span class="g">[██████████] Cok guclu</span></div>
+        <div class="line on"><span class="g">[Katman 2]</span> <span class="w">ChaCha20 ekleniyor...</span></div>
+        <div class="line on"><span class="g">[Katman 3]</span> <span class="w">XOR maskeleme ekleniyor...</span></div>
+        <div class="line on"><span class="d">────────────────────</span></div>
+        <div class="line on"><span class="g">Pipeline:</span> <span class="wh">AES-256-GCM → ChaCha20 → XOR</span></div>
+        <div class="line on">&nbsp;</div>
+        <div class="line on"><span class="g">SIFRELI CIKTI:</span></div>
+        <div class="line on"><span class="d">WE9SOkNDMjA6QkFBQU...</span></div>
+        <div class="line on"><span class="g">Kaydedildi:</span> <span class="f">mesaj.enc</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arch-visual reveal vis">
+    <div class="arch-node">
+      <div class="arch-icon">TXT</div>
+      <div><div class="arch-label">Duz Metin</div><div class="arch-desc">Kullanicinin girdisi</div></div>
+    </div>
+    <div class="arch-arrow"></div>
+    <div class="arch-node">
+      <div class="arch-icon">AES</div>
+      <div><div class="arch-label">AES-256-GCM Sifreleme</div><div class="arch-desc">PBKDF2 anahtar turetme + 12-byte nonce</div></div>
+    </div>
+    <div class="arch-arrow"></div>
+    <div class="arch-node">
+      <div class="arch-icon">CC</div>
+      <div><div class="arch-label">ChaCha20-Poly1305</div><div class="arch-desc">Ikinci katman authenticated encryption</div></div>
+    </div>
+    <div class="arch-arrow"></div>
+    <div class="arch-node">
+      <div class="arch-icon">XOR</div>
+      <div><div class="arch-label">XOR Maskeleme</div><div class="arch-desc">Son katman obfuscation</div></div>
+    </div>
+    <div class="arch-arrow"></div>
+    <div class="arch-node">
+      <div class="arch-icon">B64</div>
+      <div><div class="arch-label">Base64 Cikti</div><div class="arch-desc">Sifreli, tasinabilir veri</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ BLUE EYES ════════════ -->
+<section class="s-panel reveal vis">
+  <div class="s-eyebrow">Yapay Zeka Motoru</div>
+  
+  <h2 class="s-heading"><em style="color: #0252df; text-shadow: 0 0 20px rgba(2, 82, 223, 0.4); font-style: normal;">Blue Eyes 2.0 — AI Sohbet Asistani </em> </h2>
+  <p class="s-sub">Google Gemini destekli, kisisellestirilmis yapay zeka asistani. Terminal ve GUI ile kod yaz, analiz et, ogren. API olmadan bile calisir.</p>
+
+  <div class="tool-row flip">
+    <div class="tool-info">
+      <div class="feat-grid">
+        <div class="feat-item"><strong>Gemini API</strong>2.5 Flash/Pro, 2.0 Flash modelleri</div>
+        <div class="feat-item"><strong>Syntax Highlight</strong>Python kod renklendirme</div>
+        <div class="feat-item"><strong>Offline Mod</strong>API olmadan yerel yanitlar</div>
+        <div class="feat-item"><strong>Tema Destegi</strong>Dark / Light GUI tema</div>
+        <div class="feat-item"><strong>Kisilik Ayari</strong>AI karakterini ozellestir</div>
+        <div class="feat-item"><strong>Soru Onerileri</strong>Baglama gore akilli oneriler</div>
+        <div class="feat-item"><strong>Cok Satirli</strong>Uzun metin girisi (sinir yok)</div>
+        <div class="feat-item"><strong>Ayar Yonetimi</strong>JSON tabanli kalici ayarlar</div>
+      </div>
+    </div>
+
+    <div class="term-window">
+      <div class="term-bar">
+        <div class="term-dot r"></div>
+        <div class="term-dot y"></div>
+        <div class="term-dot g"></div>
+        <span class="term-title">Blue Eyes 2.0</span>
+      </div>
+      <div class="term-body" id="term-blue">
+        <div class="line on"><span class="g">Gemini baglantisi basarili!</span></div>
+        <div class="line on"><span class="d">──────────────────────</span></div>
+        <div class="line on">&nbsp;</div>
+        <div class="line on"><span class="wh">Sen :</span> <span class="f">Python'da AES sifreleme nasil yapilir?</span></div>
+        <div class="line on">&nbsp;</div>
+        <div class="line on"><span class="r">BLUE EYES:</span></div>
+        <div class="line on"><span class="f">cryptography kutuphanesini kullanabilirsin:</span></div>
+        <div class="line on">&nbsp;</div>
+        <div class="line on"><span class="d">┌──────────────────────────┐</span></div>
+        <div class="line on"><span class="d">│</span> <span class="w">from</span> <span class="f">cryptography...</span> <span class="w">import</span> <span class="f">AESGCM</span></div>
+        <div class="line on"><span class="d">│</span> <span class="f">key = AESGCM.generate_key(</span><span class="g">256</span><span class="f">)</span></div>
+        <div class="line on"><span class="d">│</span> <span class="f">aesgcm = AESGCM(key)</span></div>
+        <div class="line on"><span class="d">└──────────────────────────┘</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ STATS ════════════ -->
+<section class="s-panel reveal vis">
+  <div class="s-eyebrow">Sistem Durumu</div>
+  <h2 class="s-heading">Rakamlarla <em>ToolKit</em></h2>
+
+  <div class="stats-row">
+    <div class="stat-cell">
+      <div class="stat-val" data-target="3">3</div>
+      <div class="stat-label">Sifreleme Katmani</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-val" data-target="256">256</div>
+      <div class="stat-label">Bit Anahtar Uzunlugu</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-val" data-target="200">200</div>
+      <div class="stat-label">Bin PBKDF2 Iterasyon</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-val" data-target="4">4</div>
+      <div class="stat-label">Gemini Modeli</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-val" data-target="2">2</div>
+      <div class="stat-label">Arayuz Modu</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ INSTALL ════════════ -->
+<section class="s-panel reveal vis">
+  <div class="s-eyebrow">Kurulum</div>
+  <h2 class="s-heading">Hizli <em>Baslangic</em></h2>
+
+  <div class="install-card">
+    <div class="step"><span class="cm"># Klonla</span></div>
+    <div class="step"><span class="p">$</span> <span class="c">git clone https://github.com/KULLANICI/ToolKit.git</span></div>
+    <div class="step"><span class="p">$</span> <span class="c">cd ToolKit</span></div>
+    <div class="step">&nbsp;</div>
+    <div class="step"><span class="cm"># Bagimliliklar</span></div>
+    <div class="step"><span class="p">$</span> <span class="c">pip install -r requirements.txt</span></div>
+    <div class="step">&nbsp;</div>
+    <div class="step"><span class="cm"># GUI icin (Linux)</span></div>
+    <div class="step"><span class="p">$</span> <span class="c">sudo apt install python3-tk</span></div>
+    <div class="step">&nbsp;</div>
+    <div class="step"><span class="cm"># Baslat</span></div>
+    <div class="step"><span class="p">$</span> <span class="c">python3 main.py</span></div>
+  </div>
+</section>
+
+<!-- ════════════ FOOTER ════════════ -->
+<footer class="site-footer">
+  <div class="footer-sig">Built by <strong>???</strong> — HACK IS GOOD ToolKit</div>
+  <div class="footer-links">
+    <a href="file:///home/enes/Desktop/ToolKit/farkl%C4%B1.html#boot">Basa Don</a>
+  </div>
+</footer>
+
+</div>
+
+<script>
+/* ══════ AMBIENT CODE RAIN (Canvas) ══════ */
+(function(){
+  const cv = document.getElementById('ambient');
+  const cx = cv.getContext('2d');
+  let W, H;
+
+  const fragments = [
+    'def encrypt(text, key):', 'aesgcm.encrypt(nonce, data, None)',
+    'return base64.b64encode(ct)', 'salt = os.urandom(16)',
+    'PBKDF2HMAC(algorithm=SHA256())', 'engine = CryptoEngine()',
+    '#include <openssl/evp.h>', 'EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm())',
+    'std::vector<uint8_t> result;', 'RAND_bytes(iv, sizeof(iv));',
+    'const uint8_t* key_data', 'EVP_CIPHER_CTX_new();',
+    '<?php $ct = openssl_encrypt(', 'hash_pbkdf2("sha256", $pw, $salt)',
+    '$key = random_bytes(32);', 'function decrypt($data, $key) {',
+    'OPENSSL_RAW_DATA, $iv, $tag);', 'base64_encode($salt . $iv . $ct);',
+    'SecretKeyFactory.getInstance(', 'new PBEKeySpec(password.toCharArray())',
+    'Cipher.getInstance("AES/GCM")', 'SecureRandom().nextBytes(salt);',
+    'import javax.crypto.*;', 'public byte[] encrypt(String text)',
+    '<div class="crypto-panel">', 'border: 1px solid var(--edge);',
+    'background: linear-gradient(', '@keyframes encrypt-pulse {',
+    'animation: glow 2s infinite;', 'transform: rotateX(45deg);',
+    'chat.send_message(user_input)', 'response = client.chats.create(',
+    'model="gemini-2.0-flash"', 'system_instruction=config',
+  ];
+
+  const particles = [];
+  let mouse = { x: -1000, y: -1000 };
+
+  function resize() {
+    W = cv.width = window.innerWidth;
+    H = cv.height = window.innerHeight;
+  }
+
+  function init() {
+    resize();
+    const count = Math.min(Math.floor((W * H) / 25000), 50);
+    particles.length = 0;
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vy: 0.15 + Math.random() * 0.35,
+        text: fragments[Math.floor(Math.random() * fragments.length)],
+        alpha: 0.04 + Math.random() * 0.08,
+        size: 9 + Math.random() * 3,
+      });
+    }
+  }
+
+  function draw() {
+    cx.clearRect(0, 0, W, H);
+    cx.font = '10px Menlo, Monaco, Consolas, monospace';
+
+    for (const p of particles) {
+      p.y += p.vy;
+      if (p.y > H + 20) {
+        p.y = -20;
+        p.x = Math.random() * W;
+        p.text = fragments[Math.floor(Math.random() * fragments.length)];
+      }
+
+      const dx = mouse.x - p.x;
+      const dy = mouse.y - p.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      let glow = p.alpha;
+
+      if (dist < 180) {
+        glow = p.alpha + (1 - dist / 180) * 0.18;
+        p.x -= dx * 0.003;
+      }
+
+      cx.globalAlpha = glow;
+      cx.fillStyle = '#00ff9f';
+      cx.fillText(p.text, p.x, p.y);
+    }
+
+    cx.globalAlpha = 1;
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', () => { resize(); init(); });
+  document.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+  init();
+  draw();
+})();
+
+/* ══════ BOOT SEQUENCE ══════ */
+(function(){
+  const logo = document.getElementById('boot-logo');
+  const lines = document.querySelectorAll('#boot-lines .boot-line');
+  const prompt = document.getElementById('boot-prompt');
+  const cue = document.getElementById('scroll-cue');
+
+  setTimeout(() => logo.classList.add('show'), 200);
+
+  lines.forEach((el, i) => {
+    setTimeout(() => el.classList.add('show'), 900 + i * 220);
+  });
+
+  const totalDelay = 900 + lines.length * 220 + 400;
+  setTimeout(() => prompt.classList.add('show'), totalDelay);
+  setTimeout(() => cue.classList.add('show'), totalDelay + 600);
+})();
+
+/* ══════ TERMINAL LINE REVEAL ══════ */
+function revealTerminal(id) {
+  const lines = document.querySelectorAll(`#${id} .line`);
+  lines.forEach((el, i) => {
+    setTimeout(() => el.classList.add('on'), i * 150);
+  });
+}
+
+const termObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      revealTerminal(e.target.id);
+      termObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.3 });
+
+document.querySelectorAll('.term-body').forEach(el => termObserver.observe(el));
+
+/* ══════ SCROLL REVEAL ══════ */
+const revObs = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('vis'), i * 80);
+      revObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => revObs.observe(el));
+
+/* ══════ STAT COUNTER ══════ */
+const statObs = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const el = entry.target;
+    const target = parseInt(el.dataset.target);
+    const duration = 1200;
+    const start = performance.now();
+
+    function tick(now) {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(target * eased);
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+
+    requestAnimationFrame(tick);
+    statObs.unobserve(el);
+  });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('.stat-val').forEach(el => statObs.observe(el));
+</script>
+</body></html>
